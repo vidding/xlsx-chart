@@ -431,6 +431,7 @@ var Chart = Backbone.Model.extend ({
 		titles: []
 		fields: []
 		data: {title: {field: value, ...}, ...}
+		template: 'extratemplate.xlsx'
 	*/
 	generate: function (opts, cb) {
 		var me = this;
@@ -439,8 +440,15 @@ var Chart = Backbone.Model.extend ({
 		async.series ([
 			function (cb) {
 				me.zip = new JSZip ();
+				// support extra template
+				var templatefile = '';
 				me.setTemplateName ();
-				fs.readFile (__dirname + "/../template/" + me.tplName + ".xlsx", function (err, data) {
+				if (me.template) {					
+					templatefile = me.template;
+				} else {					
+					templatefile = __dirname + "/../template/" + me.tplName + ".xlsx";
+				}		
+				fs.readFile (templatefile, function (err, data) {
 					if (err) {
 						return cb (err);
 					};
