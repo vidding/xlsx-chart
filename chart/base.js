@@ -115,8 +115,35 @@ var Chart = Backbone.Model.extend ({
 			if (err) {
 				return cb (new VError (err, "writeStrings"));
 			}
-			o.sst.$.count = me.titles.length + me.fields.length;
+			// keep the strings of xlsx template
+			var oldcount = o.sst.si.length;
+			o.sst.$.count = me.titles.length + me.fields.length + oldcount;
 			o.sst.$.uniqueCount = o.sst.$.count;
+			// support extras strings
+			// extra string's key must be match to '{{key}}' which in xlsx template file
+			// eg. 
+			// {
+			// 	extras: {
+			// 		name: 'zhangsan'
+			// 	}
+			// }
+			// then '{{name}}' will be replaced to 'zhangsan'
+			if (me.extras) {
+				_.each (o.sst.si, function (o) {
+					if (o.t && 
+						o.t.length > 4 &&
+						o.t[0] === '{' &&
+						o.t[1] === '{' &&
+						o.t[o.t.length - 1] === '}' &&
+						o.t[o.t.length - 2] === '}') {
+
+						var key = o.t.substr(2, o.t.length - 4);
+						if (key in me.extras) {
+							o.t = me.extras[key]
+						}
+					}
+				})
+			}
 			var si = [];
 			_.each (me.titles, function (t) {
 				si.push ({t: t});
@@ -126,9 +153,9 @@ var Chart = Backbone.Model.extend ({
 			});
 			me.str = {};
 			_.each (si, function (o, i) {
-				me.str [o.t] = i;
+				me.str [o.t] = oldcount + i;
 			});
-			o.sst.si = si;
+			o.sst.si = _.union(o.sst.si, si);
 			me.write ({file: "xl/sharedStrings.xml", object: o});
 			cb ();
 		});
